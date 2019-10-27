@@ -18,17 +18,8 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
 --  INSERT INTO npc (npc_type,npc_posx,npc_posy,npc_posz,npc_faceto,npc_is_healer,npc_name, npc_script,npc_sex,npc_hair,npc_beard,npc_hairred,npc_hairgreen,npc_hairblue,npc_skinred,npc_skingreen,npc_skinblue,npc_hairalpha,npc_skinalpha) VALUES(0,682,316,0,4,FALSE,'Telepath','npc.mind_messenger',1,7,0,238,118,0,245,180,137,255,255);
 
 local common = require("base.common")
-local hair = require("base.hair")
 local money = require("base.money")
 local globalvar = require("base.globalvar")
-
-local DYESHORT = 1
-local DYELONG = 0
-local NOT_FOR_LIZARD = false
-local FOR_LIZARD_ONLY = true
-local DECISION_NOTHING = 1
-local DECISION_TAKETHIS = 2
-local DECISION_TRIM = 3
 
 local M = {}
 
@@ -95,12 +86,26 @@ local function initNpc(npc)
 end
 
 --Definitions
-local silver = 100
-local gold = 100 * silver
+local MAX_RECEPIENTS_TO_OFFER = 20
+local COST_SILVER = 10
 
 local function start_message(user,npc)
-    title = "Receiver name"
-    infoText = "Whom do you want to send a message to? What is his full name?"
+    title = "Choose the recipient"
+    infoText = "This will cost you "..COST_SILVER.." silver coins. Whom do you want to send a message to?"
+
+    local onlineChars = world:getPlayersOnline()
+    local n = math.min(#onlineChars, MAX_RECEPIENTS_TO_OFFER)
+    local charNamesToSuggest = {}
+    -- FIXME remove the user himself from the list
+    -- permute the list, so that for number of players above MAX_RECEPIENTS_TO_OFFER we see different options
+    for i = 1, n do
+        local j = math.random(i, n)
+        onlineChars[i], onlineChars[j] = onlineChars[j], onlineChars[i]
+        charNamesToSuggest[i] = onlineChars[i].name
+    end
+
+
+
     local callback = function(dialog)
         if not dialog:getSuccess() then
             return
