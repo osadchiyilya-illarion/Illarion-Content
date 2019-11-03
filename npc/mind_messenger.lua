@@ -17,150 +17,118 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 --  INSERT INTO npc (npc_type,npc_posx,npc_posy,npc_posz,npc_faceto,npc_is_healer,npc_name, npc_script,npc_sex,npc_hair,npc_beard,npc_hairred,npc_hairgreen,npc_hairblue,npc_skinred,npc_skingreen,npc_skinblue,npc_hairalpha,npc_skinalpha) VALUES(0,682,316,0,4,FALSE,'Telepath','npc.mind_messenger',1,7,0,238,118,0,245,180,137,255,255);
 
+local baseNPC = require("npc.base.basic")
+local condition_item = require("npc.base.condition.item")
+--require("npc.base.condition.language")
+--require("npc.base.condition.quest")
+--require("npc.base.condition.skill")
+--require("npc.base.consequence.deleteitem")
+local consequence_inform_nls = require("npc.base.consequence.inform_nls")
+local consequence_mind_message = require("npc.base.consequence.mind_message")
+--require("npc.base.consequence.item")
+--require("npc.base.consequence.money")
+--require("npc.base.consequence.quest")
+--require("npc.base.consequence.skill")
+local talkNPC = require("npc.base.talk")
+--module("npc.test_pure", package.seeall)
+
 local common = require("base.common")
-local money = require("base.money")
 local globalvar = require("base.globalvar")
 
 local M = {}
 
-local init = {}
 
-local saidText = {}
+local function initNpc()
+    local mainNPC = baseNPC();
+    mainNPC:setAffiliation(0);
+    mainNPC:addLanguage(0);
+    mainNPC:addLanguage(1);
+    mainNPC:setDefaultLanguage(0);
+    mainNPC:setLookat("Dieser NPC ist der Einsiedler Raban.", "This NPC is the hermit Raban.");
+    mainNPC:setUseMessage("Fass mich nicht an!", "Do not touch me!");
+    mainNPC:setConfusedMessage("#me schaut dich verwirrt an.", "#me looks at you confused.");
+    mainNPC:setEquipment(1, 829);
+    mainNPC:setEquipment(3, 365);
+    mainNPC:setEquipment(11, 2419);
+    mainNPC:setEquipment(5, 207);
+    mainNPC:setEquipment(6, 0);
+    mainNPC:setEquipment(4, 48);
+    mainNPC:setEquipment(9, 34);
+    mainNPC:setEquipment(10, 369);
+    mainNPC:setAutoIntroduceMode(true);
+    local talkingNPC = talkNPC(mainNPC);
 
-local npcTalk = {
-  --{{said},{answersDe},{answersEn}}
-    {   {"hello","greet","hail","good day","good morning","good evening","good night","grüß","gruß","guten morgen","guten tag","guten abend","gute nacht","mahlzeit","tach","moin","mohltied","hiho","hallo","hey","greeb"},
-        {"Grüßt euch!","Hallo wieder etwas gewachsen?","Hallo, lange nicht gesehen!"},
-        {"Be greeted!","Hello my friend!","Hello, I haven't seen you for a while!"} },
-    {   {"farewell","bye","fare well","see you","tschüß","tschüss","wiedersehen","gehab wohl","ciao","adieu","au revoir","farebba"},
-        {"Auf Wiedersehen!","Man sieht sich!","Passt auf Eure Haare auf!"},
-        {"Goodbye!","Goodbye and good luck!","Take care of your hair!"} },
-    {   {"how are you","how feel","how do you do","wie geht","wie fühlst","wie ist es ergangen","wie befind"},
-        {"Danke und Euch?","Ich kann nicht klagen aber Ihr solltest das.","Mir ging es nie besser."},
-        {"Good, thank you, and yourself?","I can't complain, but you should.","Never better than today."} },
-    {   {"your name","who are you","who art thou","ihr name","dein name","wer bist du","wer seid ihr","wie heißt"},
-        {"Die schnellste Schere Illarions.","Meister der Haarkunst Erza, und Ihr?","Ich bin Erza."},
-        {"The fastest scissors in Illarion.","Master of hair art, Erza, and you?","I am Erza."} },
-    {   {"besser","better","improve"},
-        {"Man kann immer besser aussehen. Man muss nur wollen.","Es gibt immer was abzuschneiden, packen wir es an.","Wer will schon bleiben wie er ist?"},
-        {"You can always make yourself look better, if you want.","There is always something to cut. Let's start.","Do you really want to stay as you are?"} },
-    {   {"god","gott","gött"},
-        {"Wenn ich Euch unter meine Fittiche nehme, lächeln die Götter.","Die Götter werden Euch immer wiedererkennen, bei allen anderen bin ich mir nicht sicher.","Gleich hinter dem Haus findet Ihr Adrons Altar."},
-        {"Be assured, as I work on you the gods will smile.","Gods will recognise you, however, I'm not that sure about everybody else.","Right behind the house is an altar to Adron."} },
-    {   {"quest","task","mission","auftrag","aufgabe"},
-        {"Ich vergebe keine Aufgaben.","Ich hätte eine unentwirrbare Aufgabe, aber die ist fest auf Eurem Kopf.","Nein ich habe für Euch nichts zu tun, außer still sitzen."},
-        {"I don't have a quest for you.","There is an inextricable mission, but it is located on your head.","No I don't have a quest for you, but you could keep still."} },
-    {   {"zahl","pay","coins","münze"},
-        {"Pünktlich zahlen zahlt sich immer aus.","Nichts ist umsonst zu haben."},
-        {"Paying on time always pays off.","There is nothing for free."} }
-}
+    talkingNPC:addTalkingEntryNLS(
+        {"Hilfe"},
+        {"Help"},
+        nil,
+        nil,
+        nil,
+        {consequence_inform_nls(
+            "[Spielhilfe] Dieser NPC ist der Einsiedler Raban. Schlüsselwörter: Hallo, Quest, Sichel, Kräuter.",
+            "[Game Help] This NPC is the hermit Raban. Keywords: Hello, quest, sickle, herbs."
+        )}
+    )
 
-local cycleText = {
-{"Schnapp, schnipp und ab!", "Snip snip here! Snip snip there! And a couple of tra-la-las!"},
-{"#me schaut einen Vorbeigehenden an und ruft: 'Lange nicht mehr geschnitten, oder?'", "#me eyes a passerby and shouts, 'Get a haircut!'"},
-{"#me bürstet ihre Schürze aus.", "#me brushes off her apron."},
-{"#me pflückt Haare aus dem Kamm.", "#me plucks hairs from her comb."},
-{"#me prüft die Schärfe ihrer Schere. ", "#me checks the blade of her scissors."},
-{"#me schaut ihr Spiegelbild lächelnd an.", "#me smiles looking at her reflection."},
-{"#me starrt auf eine Rasierklinge.", "#me stares at her razor."},
-{"#me haucht den Spiegel an und putzt ihn mit dem Ärmel.", "#me exhales on her mirror, producing a damp mist and cleaning it with her sleeve."},
-{"Haare schneiden fast im Vorbeigehen.", "Hair one moment. Gone the next!"},
-{"Einige Krieger kommen und wollen 'Aim the for the flat-top'. Was immer das sein soll.", "Some warrior once told me, 'Aim the for the flat-top!' Whatever that means."},
-{"Zeit Euch zu rasieren!?", "Time for a shave yes?"},
-{"Oh Götter, da ist eine tote Ratte auf Eurem Kopf.", "Oh my gods! There's a dead rat on your head!."},
-{"Ich schneid dem Nächsten die Kehle durch, der mir mit .. Oh Hallo, braucht Ihr eine Rasur?", "I'll kill the next fella that.. Oh hello there, care for a shave?"}
-}
+    talkingNPC:addTalkingEntryNLS(
+        {"Grüß", "Gruß"},
+        {"Hello", "Greet"},
+        nil,
+        {
+            "Ach ja, wieder eine rastlose Seele. Willkommen in meinem Hain.",
+            "Wer ist da! Entschuldigt, ich bin es nicht gewohnt, Besucher zu empfangen."
+        },
+        {
+            "Ah, yes, an unsettled soul. Welcome to my grove.",
+            "Who's there? Pardon me, I am not used to visitors.",
+            "So, after all these summers, somebody comes here. I hope your intentions are good.",
+        },
+        nil
+    )
 
-local function initNpc(npc)
-    for i, textLine in pairs (npcTalk) do
-        for _, said in pairs (textLine[1]) do
-            table.insert(saidText, {said, i})
-        end
-    end
-    npc:createAtPos(3, 849, 1) --dress
---    npc:createAtPos(9, 826, 1) --trousers
---    npc:createAtPos(0, 1415, 1) --hat
---    npc:createAtPos(11, 2384, 1) --coat
-    npc:createAtPos(10, 369, 1) -- shoes
-    init[npc.id] = true
-end
+    talkingNPC:addTalkingEntryNLS(
+        {"FIXGERMAN message"},
+        {"message"},
+        nil,
+        {
+            "FIXGERMAN",
+        },
+        {
+            "FIXME",
+        },
+        {consequence_mind_message(
+            "FIXGERMAN", "waits for you at Hemp Necktie inn.", -- messageTailDe, messageTailEn,
+            "FIXGERMAN", "The service costs 10 silver coins, no barganing.", -- msgNotEnoughMoneyDe, msgNotEnoughMoneyEn,
+            "FIXGERMAN", "Maybe another time then.", -- msgUserCalcelDe, msgUserCalcelEn,
+            "FIXGERMAN", "I don't feel anyone that I could contact right now.", -- msgNoRecepientsDe, msgNoRecepientsEn,
+            "FIXGERMAN", "This mind was out of my reach, I won't charge you for the attempt.", -- msgContactFailedDe, msgContactFailedEn,
+            "FIXGERMAN", "Your message was delivered.", -- msgSuccessDe, msgSuccessEn,
+            10 -- costSilver
+        )}
+    )
 
---Definitions
-local MAX_RECEPIENTS_TO_OFFER = 20
-local COST_SILVER = 10
+    talkingNPC:addCycleText("#me klopft die Erde um einen frisch gepflanzten Setzling glatt.", "#me flattens the soil around a newly planted seedling.");
+    talkingNPC:addCycleText("Wachst und gedeiht, meine Kinder.", "Grow and prosper, my children.");
+    talkingNPC:addCycleText("#me streicht sachte über die Blätter eines Strauches und seufzt.", "#me gently strokes the leaves of a bush and sighs.");
+    talkingNPC:addCycleText("#me flüstert kaum hörbar zu einer Fichte. Man kann sich einbilden, die Äste des Baumes würden antwortend im Wind rauschen.", "#me whispers, barely audibly, to a fir tree. One could imagine the branches of the tree rustling in the wind in response.");
+    talkingNPC:addCycleText("Waren wir noch längst nicht geboren, saht ihr auf alles herab. Sind wir längst gegangen, gehört euch das Land erneut.", "When we weren't even born, you could look down and behold it all. When we are long gone, the land will be yours again.");
+    talkingNPC:addCycleText("Ich habe etwas gehört.", "I heard something.");
+    talkingNPC:addCycleText("Shh! Wenn ihr ganz still seid, könnt ihr dem Klang der Stille lauschen.", "Shh! If you're quiet, you can listen to the sound of silence.");
+    talkingNPC:addCycleText("#me schaut sich um und nickt zufrieden.", "#me looks around and nods with satisfaction.");
+    talkingNPC:addCycleText("Wer wagt es, meine Ruhe zu stören?", "Who dares to disturb me?");
+    talkingNPC:addCycleText("Willkommen in meinem Hain.", "Welcome to my grove.");
 
-local function start_message(user,npc)
-    title = "Choose the recipient"
-    infoText = "This will cost you "..COST_SILVER.." silver coins. Whom do you want to send a message to?"
+    mainNPC:initDone();
 
-    local onlineChars = world:getPlayersOnline()
-    local n = math.min(#onlineChars, MAX_RECEPIENTS_TO_OFFER)
-    local charNamesToSuggest = {}
-    -- FIXME remove the user himself from the list
-    -- permute the list, so that for number of players above MAX_RECEPIENTS_TO_OFFER we see different options
-    for i = 1, n do
-        local j = math.random(i, n)
-        onlineChars[i], onlineChars[j] = onlineChars[j], onlineChars[i]
-        charNamesToSuggest[i] = onlineChars[i].name
-    end
+    M.mainNPC = mainNPC
+end;
 
+initNpc();
 
-
-    local callback = function(dialog)
-        if not dialog:getSuccess() then
-            return
-        else
-            local targetName = dialog:getInput()
-
-        end
-    end
-    local dialog = InputDialog(title, infoText, false, 255, callback)
-    User:requestInputDialog(dialog)
-end
-
-function M.useNPC(npc, user)
-    M.receiveText(npc, nil, "help", user)
-end
-
-function M.receiveText(npc, ttype, text, user)
-    if not npc:isInRange(user, 2) then
-        return
-    end
-
-    text = string.lower(text)
-
-    if string.match(text, "hilf") or string.match(text, "help") then
-        common.InformNLS(user,"[Hilfe] Dieser NPC ist eine Friseuse. Bitte sie, dir die Haare oder den Bart zu machen. Schlüsselwörter: schneid, rasier, färb, polier, zahlen",
-                              "[Help] This NPC is a hair dresser. Ask her to change your hair style (cut), beard style (shave) or hair colour (dye). Keywords: cut, shave, dye, polish, pay")
-        return
-    end
-
-    if string.match(text, "FIXGERMAN message") or string.match(text, "message" --[[FIXENGLISH]]) then
-        start_message(user, npc)
-    end
-
-
-    for i=1,#saidText do
-        if string.match(text, saidText[i][1]) then
-            local answerId = saidText[i][2]
-            local answerDe = npcTalk[answerId][2][math.random(1,#npcTalk[answerId][2])]
-            local answerEn = npcTalk[answerId][3][math.random(1,#npcTalk[answerId][3])]
-            if not common.IsNilOrEmpty(answerDe) and not common.IsNilOrEmpty(answerEn) then
-                common.TalkNLS(npc, Character.say, answerDe, answerEn)
-                return
-            end
-        end
-    end
-end
-
-function M.nextCycle(npc)
-    if math.random(4000) == 1 then
-        local textNo = math.random(#cycleText)
-        common.TalkNLS(npc,Character.say,cycleText[textNo][1],cycleText[textNo][2])
-    end
-    if not init[npc.id] then
-        initNpc(npc)
-    end
-end
+function M.receiveText(npcChar, texttype, message, speaker) M.mainNPC:receiveText(npcChar, texttype, speaker, message); end;
+function M.nextCycle(npcChar) M.mainNPC:nextCycle(npcChar); end;
+function M.lookAtNpc(npcChar, char, mode) M.mainNPC:lookAt(npcChar, char, mode); end;
+function M.useNPC(npcChar, char, counter, param) M.mainNPC:use(npcChar, char); end;
 
 return M
+
