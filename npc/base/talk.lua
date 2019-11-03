@@ -27,6 +27,7 @@ local processorList = require("npc.base.responses")
 local tools = require("npc.base.tools")
 local consequence = require("npc.base.consequence.consequence")
 local condition = require("npc.base.condition.condition")
+local condition_language = require("npc.base.condition.language")
 
 local talkNPC = class(function(self, rootNPC)
     if rootNPC == nil or not rootNPC:is_a(baseNPC) then
@@ -43,16 +44,11 @@ local talkNPC = class(function(self, rootNPC)
     self["_nextCycleText"] = -1
 end)
 
-local talkNPCEntry = class(function(self)
-    self["_trigger"] = {}
-    self["_conditions"] = {}
-    
-    self["_responses"] = {}
-    self["_responseProcessors"] = {}
-    self["_responsesCount"] = 0
-    self["_consequences"] = {}
-    self["_parent"] = nil
-end)
+local talkNPCEntry = class(
+    function(self, ...)
+        self:_init(...)
+    end
+)
 
 function talkNPC:addCycleText(germanText, englishText)
     if (self._cycleText == nil) then
@@ -76,6 +72,50 @@ function talkNPC:addTalkingEntry(newEntry)
     newEntry:setParent(self)
     table.insert(self._entry, newEntry)
 end
+
+function talkNPC:addTalkingEntryNLS(triggersDe, triggersEn, conditions, responsesDe, responsesEn, consequences)
+    local talkEntryDe = talkNPCEntry()
+    talkEntryDe:addCondition(condition_language("deutsch"))
+    local talkEntryEn = talkNPCEntry()
+    talkEntryEn:addCondition(condition_language("english"))
+
+    if triggersDe ~= nil then
+        for _,t in ipairs(triggersDe) do
+            talkEntryDe:addTrigger(t)
+        end
+    end
+    if triggersEn ~= nil then
+        for _,t in ipairs(triggersEn) do
+            talkEntryEn:addTrigger(t)
+        end
+    end
+    if conditions ~= nil then
+        for _,c in ipairs(conditions) do
+            talkEntryDe:addCondition(c)
+            talkEntryEn:addCondition(c)
+        end
+    end
+    if responsesDe ~= nil then
+        for _,r in ipairs(responsesDe) do
+            talkEntryDe:addResponse(r)
+        end
+    end
+    if responsesEn ~= nil then
+        for _,r in ipairs(responsesEn) do
+            talkEntryEn:addResponse(r)
+        end
+    end
+    if consequences ~= nil then
+        for _,c in ipairs(consequences) do
+            talkEntryDe:addConsequence(c)
+            talkEntryEn:addConsequence(c)
+        end
+    end
+
+    self:addTalkingEntry(talkEntryDe)
+    self:addTalkingEntry(talkEntryEn)
+end
+
 
 function talkNPC:receiveText(npcChar, texttype, player, text)
     local result = false
@@ -105,6 +145,17 @@ function talkNPC:nextCycle(npcChar, counter)
     end
     
     return self._nextCycleText
+end
+
+function talkNPCEntry:_init()
+    self["_trigger"] = {}
+    self["_conditions"] = {}
+
+    self["_responses"] = {}
+    self["_responseProcessors"] = {}
+    self["_responsesCount"] = 0
+    self["_consequences"] = {}
+    self["_parent"] = nil
 end
 
 function talkNPCEntry:addTrigger(text)

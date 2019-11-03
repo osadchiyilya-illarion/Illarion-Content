@@ -27,6 +27,7 @@ local areas = require("content.areas")
 local hairdresser = require("npc.hairdresser")
 local seafaring = require("base.seafaring")
 local petsystem = require("petsystem.base")
+local gods_common = require("content._gods.gods_common")
 -- Called after every player login
 
 local M = {}
@@ -320,6 +321,12 @@ function M.onLogin( player )
     if not found then
         player.effects:addEffect(LongTimeEffect(33, 10))
     end
+
+    --Checking gods cooldown
+    found = player.effects:find(gods_common.EFFECT_ID)
+    if not found then
+        player.effects:addEffect(LongTimeEffect(gods_common.EFFECT_ID, 10))
+    end
     
     --Handle pets
     --petsystem.loadPet(player)
@@ -609,6 +616,8 @@ function payNow(User)
 --Runewick = 101
 --Galmair = 102
 --Hemp Necktie Inn = 103 (not a faction!)
+--ATTENTION: Depot IDs are magically shifted by 1 compared to the data in item.id_321_depot
+
     local infText = ""
 
      -- no member of any town
