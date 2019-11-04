@@ -24,7 +24,10 @@ local _mind_message_helper
 local mind_message = class(consequence,
 function(
     self,
+    messageHeadDe, messageHeadEn,
     messageTailDe, messageTailEn,
+    msgChooseRecepientDe, msgChooseRecepientEn,
+    msgChooseSignatureDe, msgChooseSignatureEn,
     msgNotEnoughMoneyDe, msgNotEnoughMoneyEn,
     msgUserCalcelDe, msgUserCalcelEn,
     msgNoRecepientsDe, msgNoRecepientsEn,
@@ -34,8 +37,14 @@ function(
 
     consequence:init(self)
 
+    self["_messageHeadDe"] = messageHeadDe
+    self["_messageHeadEn"] = messageHeadEn
     self["_messageTailDe"] = messageTailDe
     self["_messageTailEn"] = messageTailEn
+    self["_msgChooseRecepientDe"] = msgChooseRecepientDe
+    self["_msgChooseRecepientEn"] = msgChooseRecepientEn
+    self["_msgChooseSignatureDe"] = msgChooseSignatureDe
+    self["_msgChooseSignatureEn"] = msgChooseSignatureEn
     self["_msgNotEnoughMoneyDe"] = msgNotEnoughMoneyDe
     self["_msgNotEnoughMoneyEn"] = msgNotEnoughMoneyEn
     self["_msgUserCalcelDe"] = msgUserCalcelDe
@@ -66,6 +75,9 @@ function mind_message:start_message(sender, messenger)
         return
     end
 
+    -- checks passed, ask to choose the recepient
+    messenger:talk(Character.say, self._msgChooseRecepientDe, self._msgChooseRecepientEn)
+
     -- remove the sender himself from the list
     for i = 1, #onlineChars do
         if onlineChars[i].id == sender.id then
@@ -81,21 +93,23 @@ function mind_message:start_message(sender, messenger)
         onlineChars[i], onlineChars[j] = onlineChars[j], onlineChars[i]
     end
 
-    local title = common.getNLS(sender, "FIXGERMAN", "Mind message")
-    local infoText = common.getNLS(sender, "FIXGERMAN", "Choose recepient")
+    local title = common.GetNLS(sender, "FIXGERMAN", "Mind message")
+    local infoText = common.GetNLS(sender, "FIXGERMAN", "Choose recepient")
     local dialogOptions = {}
     for i = 1, n do
         table.insert(dialogOptions,
-            {text = onlineChars[i].name, func = self:requireSignature, args = { sender, onlineChars[i], messenger } }
+            {text = onlineChars[i].name, func = self.requireSignature, args = { self, sender, onlineChars[i], messenger } }
         )
     end
-    local onclose = {func = messenger:talk, self._msgUserCalcelDe, self._msgUserCalcelEn}
+    local onclose = {func = messenger.talk, args = {messenger, Character.say, self._msgUserCalcelDe, self._msgUserCalcelEn}}
 
     common.selectionDialogWrapper(sender, title, infoText, dialogOptions, onclose)
 
 end
 
 function mind_message:requireSignature(sender, recepient, messenger)
+    -- ask to choose the name in the message
+    messenger:talk(Character.say, self._msgChooseSignatureDe, self._msgChooseSignatureEn)
 
     local signatureDialog = function (dialog)
         if (not dialog:getSuccess()) then
@@ -104,16 +118,20 @@ function mind_message:requireSignature(sender, recepient, messenger)
         end
         local senderSignature = dialog:getInput()
         if senderSignature == "" then
-            senderSignature = common.getNLS(recepient, "FIXGERMAN", "Someone")
+            senderSignature = common.GetNLS(recepient, "FIXGERMAN", "Someone")
         end
+
+        -- TODO: make the sender say the signature, can we avoid the messanger reacting (e.g. if the signature is "help")
+        -- -- the sender says his name, if someone stands close he may hear, we use whisper to keep some privacy
+        -- sender:talk(Character.whisper, senderSignature)
 
         self:deliver_message(sender, recepient, messenger, senderSignature)
     end
 
-    local title = common.getNLS(sender, "FIXGERMAN", "Mind message")
-    local infoText = common.getNLS(sender, "FIXGERMAN", "Your name in the message")
+    local title = common.GetNLS(sender, "FIXGERMAN", "Mind message")
+    local infoText = common.GetNLS(sender, "FIXGERMAN", "Your name in the message")
     local signatureDiaog = InputDialog(title, infoText, false, 255, signatureDialog)
-    User:requestInputDialog(signatureDiaog)
+    sender:requestInputDialog(signatureDiaog)
 end
 
 function mind_message:deliver_message(sender, recepient, messenger, senderSignature)
@@ -128,7 +146,7 @@ function mind_message:deliver_message(sender, recepient, messenger, senderSignat
         return
     end
 
-    common.informNLS(recepient, senderSignature.." "..self._messageTailDe, senderSignature.." "..self._messageTailEn)
+    common.InformNLS(recepient, self._messageHeadDe.." "..senderSignature.." "..self._messageTailDe, self._messageHeadEn.." "..senderSignature.." "..self._messageTailEn)
 
     money.TakeMoneyFromChar(sender, cost)
 

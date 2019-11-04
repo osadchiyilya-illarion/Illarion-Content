@@ -90,14 +90,13 @@ local function initNpc()
         {"FIXGERMAN message"},
         {"message"},
         nil,
-        {
-            "FIXGERMAN",
-        },
-        {
-            "FIXME",
-        },
+        nil,
+        nil,
         {consequence_mind_message(
+            "FIXGERMAN", "A voice in your head whispers:", -- messageHeadDe, messageHeadEn,
             "FIXGERMAN", "waits for you at Hemp Necktie inn.", -- messageTailDe, messageTailEn,
+            "FIXGERMAN", "Try to imagine in your mind the person you want to contact.", -- msgChooseRecepientDe, msgChooseRecepientEn,
+            "FIXGERMAN", "How should I call you in this message?", -- msgChooseSignatureDe, msgChooseSignatureEn,
             "FIXGERMAN", "The service costs 10 silver coins, no barganing.", -- msgNotEnoughMoneyDe, msgNotEnoughMoneyEn,
             "FIXGERMAN", "Maybe another time then.", -- msgUserCalcelDe, msgUserCalcelEn,
             "FIXGERMAN", "I don't feel anyone that I could contact right now.", -- msgNoRecepientsDe, msgNoRecepientsEn,
