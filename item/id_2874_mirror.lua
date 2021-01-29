@@ -42,11 +42,62 @@ function M.LookAtItem(User, Item)
     return lookAt
 end
 
-function M.UseItem(User, SourceItem)
+
+local function mirrorLookAtYourself(User)
     local output = playerlookat.getCharDescription( User, User, 2);
     -- 2 means mode mirror
-    common.TurnTo( User, SourceItem.pos );
     User:inform(output);
 end
+
+local function setDescriptionEn(User)
+    local cbInputDialog = function (dialog)
+        if (not dialog:getSuccess()) then
+            return
+        end
+        local inputText = dialog:getInput()
+        User:setDescriptionEn(inputText)
+    end
+
+    local explanation = "Define custom description that is shown when someone looks at you."
+    local descr = User:getDescriptionEn()
+    if not common.IsNilOrEmpty(descr) then
+        explanation = explanation .. "\nCurrent description is:\n" .. descr .. "\n"
+    end
+    User:requestInputDialog(InputDialog("Desctribe yourself", explanation, false, 255, cbInputDialog))
+end
+
+local function setDescriptionDe(User)
+    local cbInputDialog = function (dialog)
+        if (not dialog:getSuccess()) then
+            return
+        end
+        local inputText = dialog:getInput()
+        User:setDescriptionDe(inputText)
+    end
+
+    local explanation = "FIXGERMAN Define custom description that is shown when someone looks at you."
+    local descr = User:getDescriptionDe()
+    if not common.IsNilOrEmpty(descr) then
+        explanation = explanation .. "\nFIXGERMAN Current description is:\n" .. descr .. "\n"
+    end
+    User:requestInputDialog(InputDialog("FIXGERMAN Desctribe yourself", explanation, false, 255, cbInputDialog))
+end
+
+local function mirrorDialog(User)
+    common.selectionDialogWrapper(User, common.GetNLS(User, "FIXGERMAN", "Mirror"), "", {
+        { icon = 0, text = common.GetNLS(User, "FIXGERMAN", "Look at yourself"),
+            func = mirrorLookAtYourself, args = { User } },
+        { icon = 0, text = "Describe yourself (English)",
+            func = setDescriptionEn, args = { User } },
+        { icon = 0, text = "FIXGERMAN Describe yourself (Deutsch)",
+            func = setDescriptionDe, args = { User } },
+    })
+end
+
+function M.UseItem(User, SourceItem)
+    common.TurnTo( User, SourceItem.pos );
+    mirrorDialog(User)
+end
+
 return M
 
