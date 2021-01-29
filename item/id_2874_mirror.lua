@@ -83,7 +83,7 @@ local function setDescriptionDe(User)
     User:requestInputDialog(InputDialog("FIXGERMAN Desctribe yourself", explanation, false, 255, cbInputDialog))
 end
 
-local function mirrorDialog(User)
+function M.mirrorDialog(User)
     common.selectionDialogWrapper(User, common.GetNLS(User, "FIXGERMAN", "Mirror"), "", {
         { icon = 0, text = common.GetNLS(User, "FIXGERMAN", "Look at yourself"),
             func = mirrorLookAtYourself, args = { User } },
@@ -96,7 +96,7 @@ end
 
 function M.UseItem(User, SourceItem)
     common.TurnTo( User, SourceItem.pos );
-    mirrorDialog(User)
+    M.mirrorDialog(User)
 end
 
 return M

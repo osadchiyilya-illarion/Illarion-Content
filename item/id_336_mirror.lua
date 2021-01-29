@@ -18,15 +18,14 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 local playerlookat = require("server.playerlookat")
 local jewel = require("item.general.jewel")
+local static_mirror = require("item.id_2874_mirror")
 
 local M = {}
 
 M.LookAtItem = jewel.LookAtItem
 
 function M.UseItem(User, SourceItem)
-    local output = playerlookat.getCharDescription( User, User, 2);
-    -- 2 means mode mirror
-    User:inform(output);
+    static_mirror.mirrorDialog(User)
 end
 
 return M
